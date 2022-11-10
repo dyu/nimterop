@@ -25,7 +25,8 @@ proc getCompiler*(): string =
       elif defined(clang):
         "clang"
       else:
-        doAssert false, "Nimterop only supports gcc and clang at this time"
+        # default to clang (could be zig)
+        "clang"
 
   result = getEnv("CC", compiler)
 
@@ -94,12 +95,11 @@ proc getGccInfo*(): tuple[arch, os, compiler, version, libc: string] =
           "unknown"
     elif " version " in line:
       result.version = line.split(" version ")[1].split(' ')[0]
-  if "clang" in outp:
-    if result.os == "macos":
-      result.compiler = "apple-clang"
-    else:
-      result.compiler = "clang"
-  else:
+  if "clang version" in outp:
+    result.compiler = if result.os == "macos": "apple-clang" else: "clang"
+  elif "gcc version" in outp:
     result.compiler = "gcc"
+  else:
+    doAssert false, "Nimterop only supports gcc and clang at this time"
   if "musl" in outp:
     result.libc = "musl"
